@@ -28,13 +28,13 @@
                     <p class="text-zinc-400 text-sm">Продажа токенов через Uniswap V4 • Coinbase Wallet</p>
                 </div>
             </div>
-            
+           
             <div id="wallet-info" class="hidden items-center gap-x-3 bg-zinc-900 px-4 py-2 rounded-2xl border border-zinc-800">
                 <div class="flex items-center gap-x-2">
                     <div class="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div>
                     <span id="wallet-address" class="font-mono text-sm"></span>
                 </div>
-                <button onclick="disconnectWallet()" 
+                <button onclick="disconnectWallet()"
                         class="px-4 py-1.5 text-xs bg-zinc-800 hover:bg-red-900/50 text-red-400 rounded-xl transition-colors">
                     Отключить
                 </button>
@@ -49,12 +49,12 @@
                 </div>
                 <h2 class="text-3xl font-semibold mb-3">Подключи Coinbase Wallet</h2>
                 <p class="text-zinc-400 mb-8">Поддерживается Coinbase Wallet, MetaMask, Rabby и другие кошельки на Base</p>
-                
-                <button onclick="connectWallet()" 
+               
+                <button onclick="connectWallet()"
                         class="connect-btn w-full py-4 bg-white text-black font-semibold rounded-2xl flex items-center justify-center gap-x-3 hover:bg-zinc-100">
                     <span>Подключить кошелёк</span>
                 </button>
-                
+               
                 <p class="text-xs text-zinc-500 mt-4">Транзакции подписываются напрямую в твоём кошельке. Приватный ключ никуда не передаётся.</p>
             </div>
         </div>
@@ -76,7 +76,7 @@
                         <div class="text-sm text-zinc-400">Статус</div>
                         <div class="text-emerald-400 font-medium">Готов к продаже</div>
                     </div>
-                    <button onclick="loadTokens()" 
+                    <button onclick="loadTokens()"
                             class="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-sm flex items-center gap-x-2 transition-colors">
                         <span>🔄</span> Обновить
                     </button>
@@ -92,15 +92,15 @@
                         <button onclick="filterTokens('dust')" id="filter-dust"
                                 class="px-5 py-2 text-sm font-medium rounded-xl text-zinc-300 hover:text-white">Только dust</button>
                     </div>
-                    
+                   
                     <div class="flex items-center gap-x-2 text-sm">
                         <span class="text-zinc-400">Порог dust:</span>
-                        <input type="number" id="dust-threshold" value="0.01" step="0.001" 
+                        <input type="number" id="dust-threshold" value="0.01" step="0.001"
                                class="w-20 bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:border-cyan-500">
                     </div>
                 </div>
-                
-                <button onclick="sellAllDust()" 
+               
+                <button onclick="sellAllDust()"
                         class="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:brightness-110 text-white font-semibold rounded-2xl flex items-center gap-x-2 transition-all">
                     <span>💸 Продать все dust</span>
                 </button>
@@ -136,7 +136,6 @@
         let allTokens = [];
         let currentFilter = 'all';
 
-        // Tailwind script
         function initTailwind() {
             document.documentElement.style.setProperty('--accent', '#00d4ff');
         }
@@ -148,27 +147,23 @@
                     return;
                 }
 
-                // Подключаем Coinbase Wallet / MetaMask
                 provider = new ethers.BrowserProvider(window.ethereum);
                 await provider.send("eth_requestAccounts", []);
-                
+               
                 signer = await provider.getSigner();
                 userAddress = await signer.getAddress();
 
-                // Показываем информацию
                 document.getElementById('connect-section').classList.add('hidden');
                 document.getElementById('main-app').classList.remove('hidden');
                 document.getElementById('wallet-info').classList.remove('hidden');
                 document.getElementById('wallet-info').classList.add('flex');
-                
-                document.getElementById('connected-address').innerText = 
+               
+                document.getElementById('connected-address').innerText =
                     userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
-                document.getElementById('wallet-address').innerText = 
+                document.getElementById('wallet-address').innerText =
                     userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
 
-                // Загружаем токены автоматически
                 await loadTokens();
-
             } catch (error) {
                 console.error(error);
                 alert("Не удалось подключить кошелёк: " + error.message);
@@ -180,12 +175,12 @@
             signer = null;
             userAddress = null;
             allTokens = [];
-            
+           
             document.getElementById('connect-section').classList.remove('hidden');
             document.getElementById('main-app').classList.add('hidden');
             document.getElementById('wallet-info').classList.add('hidden');
             document.getElementById('wallet-info').classList.remove('flex');
-            
+           
             document.getElementById('tokens-body').innerHTML = '';
         }
 
@@ -193,40 +188,36 @@
             if (!userAddress) return;
 
             const tbody = document.getElementById('tokens-body');
-            tbody.innerHTML = `<tr><td colspan="4" class="px-8 py-12 text-center text-zinc-400">Загрузка токенов с Basescan...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" class="px-8 py-12 text-center text-zinc-400">Загрузка токенов через Blockscout (Base)...</td></tr>`;
 
             try {
-                // Используем публичный ключ Basescan (можно заменить на свой)
-                const apiKey = "R7BGJ7J6GQC7XFG6QMJ4GISCSW55BG3P9Q"; // ← Замени на свой ключ
-                const url = `https://api.etherscan.io/v2/api?chainid=8453&module=account&action=tokentx&address=${userAddress}&startblock=0&endblock=999999999&sort=asc&apikey=${apiKey}`;
+                // Blockscout V2 API (рекомендуется для Base)
+                const url = `https://base.blockscout.com/api/v2/addresses/${userAddress}/token-transfers`;
                 
                 const response = await fetch(url);
                 const data = await response.json();
                 
-                if (data.status !== "1") {
-                    tbody.innerHTML = `<tr><td colspan="4" class="px-8 py-12 text-center text-red-400">Ошибка загрузки токенов. Проверь API ключ.</td></tr>`;
-                    return;
-                }
-
-                const transfers = data.result || [];
+                const transfers = data.items || [];
                 const uniqueTokens = new Set();
                 
                 transfers.forEach(tx => {
-                    if (tx.from.toLowerCase() === userAddress.toLowerCase() || 
-                        tx.to.toLowerCase() === userAddress.toLowerCase()) {
-                        uniqueTokens.add(tx.contractAddress.toLowerCase());
+                    const from = tx.from?.hash?.toLowerCase();
+                    const to = tx.to?.hash?.toLowerCase();
+                    const tokenAddr = tx.token?.address?.toLowerCase();
+                    
+                    if (tokenAddr && (from === userAddress.toLowerCase() || to === userAddress.toLowerCase())) {
+                        uniqueTokens.add(tokenAddr);
                     }
                 });
 
                 allTokens = [];
-                
-                // Получаем балансы
+
                 const ERC20_ABI = [
                     "function balanceOf(address) view returns (uint256)",
                     "function decimals() view returns (uint8)",
                     "function symbol() view returns (string)"
                 ];
-                
+
                 for (const tokenAddr of uniqueTokens) {
                     try {
                         const contract = new ethers.Contract(tokenAddr, ERC20_ABI, provider);
@@ -235,7 +226,7 @@
                             contract.decimals(),
                             contract.symbol()
                         ]);
-                        
+                       
                         if (balance > 0) {
                             allTokens.push({
                                 address: tokenAddr,
@@ -262,23 +253,23 @@
         function renderTokens(filter = currentFilter) {
             const tbody = document.getElementById('tokens-body');
             tbody.innerHTML = '';
-            
+           
             const threshold = parseFloat(document.getElementById('dust-threshold').value) || 0.01;
             let filteredTokens = allTokens;
-            
+           
             if (filter === 'dust') {
                 filteredTokens = allTokens.filter(t => t.humanBalance < threshold);
             }
-            
+           
             if (filteredTokens.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="px-8 py-16 text-center text-zinc-400">Токены не найдены</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="px-8 py-16 text-center text-zinc-400">Токены не найдено</td></tr>`;
                 return;
             }
-            
+           
             filteredTokens.forEach((token, index) => {
                 const row = document.createElement('tr');
                 row.className = 'token-row transition-colors';
-                
+               
                 row.innerHTML = `
                     <td class="px-8 py-5">
                         <div class="font-semibold">${token.symbol}</div>
@@ -290,7 +281,7 @@
                         ${token.address.slice(0, 8)}...${token.address.slice(-6)}
                     </td>
                     <td class="px-4 py-5 text-right">
-                        <button onclick="sellToken(${index}, '${token.address}', ${token.balance})" 
+                        <button onclick="sellToken(${index}, '${token.address}', ${token.balance})"
                                 class="px-6 py-2 bg-white text-black text-sm font-semibold rounded-2xl hover:bg-zinc-200 transition-colors">
                             Продать
                         </button>
@@ -302,16 +293,15 @@
 
         function filterTokens(type) {
             currentFilter = type;
-            
-            // Обновляем активные кнопки
+           
             document.getElementById('filter-all').classList.toggle('bg-white', type === 'all');
             document.getElementById('filter-all').classList.toggle('text-black', type === 'all');
             document.getElementById('filter-all').classList.toggle('text-zinc-300', type !== 'all');
-            
+           
             document.getElementById('filter-dust').classList.toggle('bg-white', type === 'dust');
             document.getElementById('filter-dust').classList.toggle('text-black', type === 'dust');
             document.getElementById('filter-dust').classList.toggle('text-zinc-300', type !== 'dust');
-            
+           
             renderTokens(type);
         }
 
@@ -320,19 +310,17 @@
                 alert("Кошелёк не подключён!");
                 return;
             }
-            
+           
             const button = event.currentTarget;
             const originalText = button ? button.innerHTML : '';
-            
+           
             try {
                 if (button) button.innerHTML = '⏳ Подписывается...';
-                
-                // === НАСТРОЙКИ V4 (можно менять) ===
-                const V4_POOL_MANAGER = "0x498581fF718922c3f8e6A244956aF099B2652b2b"; // ← ЗАМЕНИ НА РЕАЛЬНЫЙ АДРЕС
+               
+                const V4_POOL_MANAGER = "0x498581fF718922c3f8e6A244956aF099B2652b2b";
                 const WETH = "0x4200000000000000000000000000000000000006";
-                const HOOK_ADDRESS = "0xC8d077444625eB300A427a6dfB2b1DBf9b159040"; // ← адрес твоего хука
-                
-                // Собираем PoolKey
+                const HOOK_ADDRESS = "0xC8d077444625eB300A427a6dfB2b1DBf9b159040";
+               
                 const isToken0 = parseInt(tokenAddress, 16) < parseInt(WETH, 16);
                 const poolKey = {
                     currency0: isToken0 ? tokenAddress : WETH,
@@ -341,33 +329,29 @@
                     tickSpacing: 60,
                     hooks: HOOK_ADDRESS
                 };
-                
+               
                 const swapParams = {
                     zeroForOne: isToken0,
-                    amountSpecified: -amountIn, // продаём
+                    amountSpecified: -amountIn,
                     sqrtPriceLimitX96: 0
                 };
-                
-                // Вызываем swap на PoolManager
+               
                 const poolManager = new ethers.Contract(
-                    V4_POOL_MANAGER, 
+                    V4_POOL_MANAGER,
                     ["function swap((address,address,uint24,int24,address), (bool,int256,uint160), bytes) payable returns (int256,int256)"],
                     signer
                 );
-                
+               
                 const tx = await poolManager.swap(
                     [poolKey.currency0, poolKey.currency1, poolKey.fee, poolKey.tickSpacing, poolKey.hooks],
                     [swapParams.zeroForOne, swapParams.amountSpecified, swapParams.sqrtPriceLimitX96],
                     "0x"
                 );
-                
+               
                 const receipt = await tx.wait();
-                
                 alert(`✅ Токен успешно продан!\n\nTX Hash: ${receipt.hash}`);
-                
-                // Обновляем список
                 await loadTokens();
-                
+               
             } catch (error) {
                 console.error(error);
                 alert("Ошибка при продаже: " + error.message);
@@ -378,43 +362,38 @@
 
         async function sellAllDust() {
             if (!allTokens.length) return;
-            
+           
             const threshold = parseFloat(document.getElementById('dust-threshold').value) || 0.01;
             const dustTokens = allTokens.filter(t => t.humanBalance < threshold);
-            
+           
             if (dustTokens.length === 0) {
                 alert("Нет dust-токенов для продажи");
                 return;
             }
-            
+           
             if (!confirm(`Продать ${dustTokens.length} dust-токенов?`)) return;
-            
+           
             for (let i = 0; i < dustTokens.length; i++) {
                 const token = dustTokens[i];
                 try {
                     await sellToken(i, token.address, token.balance);
-                    await new Promise(r => setTimeout(r, 4000)); // задержка между транзакциями
+                    await new Promise(r => setTimeout(r, 4000));
                 } catch (e) {
                     console.error(e);
                 }
             }
-            
+           
             alert("Готово! Все dust-токены обработаны.");
         }
 
-        // Инициализация
         function init() {
             initTailwind();
-            
-            // Автоматически пытаемся подключить, если уже разрешено
+           
             if (typeof window.ethereum !== 'undefined') {
                 window.ethereum.on('accountsChanged', () => {
                     if (userAddress) location.reload();
                 });
             }
-            
-            // Показываем подсказку
-            console.log('%c[Base V4 Seller] Готово к работе. Открой в браузере и подключи Coinbase Wallet.', 'color:#666');
         }
 
         window.onload = init;
