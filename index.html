@@ -197,8 +197,8 @@
 
             try {
                 // Используем публичный ключ Basescan (можно заменить на свой)
-                const apiKey = "YourBasescanAPIKeyHere"; // ← Замени на свой ключ
-                const url = `https://api.basescan.org/api?module=account&action=tokentx&address=${userAddress}&startblock=0&endblock=999999999&sort=asc&apikey=${apiKey}`;
+                const apiKey = "R7BGJ7J6GQC7XFG6QMJ4GISCSW55BG3P9Q"; // ← Замени на свой ключ
+                const url = `https://api.etherscan.io/v2/api?chainid=8453&module=account&action=tokentx&address=${userAddress}&startblock=0&endblock=999999999&sort=asc&apikey=${apiKey}`;
                 
                 const response = await fetch(url);
                 const data = await response.json();
